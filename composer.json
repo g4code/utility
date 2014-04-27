@@ -1,0 +1,33 @@
+{
+    "name": "g4/utility",
+    "description": "g4 utility package - misc helpers",
+    "keywords": [
+        "utility",
+        "tools",
+        "helpers"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dejan Samardzija",
+            "email": "samardzija.dejan@gmail.com"
+        },
+        {
+            "name": "Drasko Gomboc",
+            "email": "drasko.gomboc@gmail.com"
+        },
+        {
+            "name": "Ivan Krickovic",
+            "email": "ivan.krickovic@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"G4\\Utility\\": "src/"}
+    },
+    "require-dev": {
+
+    },
+    "require": {
+        "php": ">=5.3.3"
+    }
+}
