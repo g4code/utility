@@ -7,14 +7,8 @@ Utility
 
 > Using Composer and Packagist
 
-in composer.json file add:
-
-```json
-{
-    "require": {
-        "g4/utility": "*"
-    }
-}
+```sh
+composer require g4/utility
 ```
 
 ## Usage
