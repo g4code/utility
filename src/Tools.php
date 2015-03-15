@@ -25,7 +25,7 @@ class Tools
      */
     public static function wordRandomizer($text)
     {
-        $matches = self::_getSpinnerMatches($text);
+        $matches = self::getSpinnerMatches($text);
         $new = '';
         foreach ($matches as $row) {
             if(!preg_match('/[{}]/', $row)) {
@@ -44,7 +44,7 @@ class Tools
         return $new;
     }
 
-    protected static function _getSpinnerMatches($text)
+    private static function getSpinnerMatches($text)
     {
         return preg_split('/{([^{}]*?)}/i', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
     }
@@ -56,7 +56,7 @@ class Tools
      */
     public static function getSpinnerCombinations($text)
     {
-        $matches = self::_getSpinnerMatches($text);
+        $matches = self::getSpinnerMatches($text);
 
         foreach ($matches as $row) {
             if(!preg_match('/[{}]/', $row)) {
@@ -80,16 +80,16 @@ class Tools
         $args = func_get_args();
 
         if(count($args) == 0) {
-            return array(array());
+            return [[]]; // array with empty array is expected "empty" result
         }
 
         $work      = array_shift($args);
         $cartesian = call_user_func_array(__METHOD__, $args);
-        $result    = array();
+        $result    = [];
 
         foreach($work as $value) {
             foreach($cartesian as $product) {
-                $result[] = array_merge(array($value), $product);
+                $result[] = array_merge([$value], $product);
             }
         }
 
@@ -100,16 +100,16 @@ class Tools
      * Rearange array keys to use selected field from row element
      *
      * @param  array  $data
-     * @param  string $key_name
+     * @param  string $keyName
      * @return array
      */
-    public static function arrayChangeKeys($data, $key_name = 'id')
+    public static function arrayChangeKeys($data, $keyName = 'id')
     {
-        $temp = array();
+        $temp = [];
         if (is_array($data)) {
             foreach ($data as $key => $row) {
-                if (isset($row[$key_name])) {
-                    $temp[$row[$key_name]] = $row;
+                if (isset($row[$keyName])) {
+                    $temp[$row[$keyName]] = $row;
                 } else {
                     $temp[] = $row;
                 }
@@ -139,23 +139,33 @@ class Tools
      * Return current timestamp*
      * It will return server's REQUEST_TIME if available, or time()
      *
+     * it will only calculate once, and for all other calls just return static value
+     *
      * @return int
      */
     public static function ts()
     {
-        return isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time();
+        static $time = null;
+
+        if(null !== $time) {
+            return $time;
+        }
+
+        $time = isset($_SERVER['REQUEST_TIME'])
+            ? $_SERVER['REQUEST_TIME']
+            : time();
+
+        return $time;
     }
 
     /**
-     * Calculate time period and return it in human readable format
+     * Calculate time period and return it in separated time segments
      *
-     * @autor Dejan Samardzija
      * @param int $timestamp timestamp for data in past you want to calculate elapsed period
+     * @return array
      */
     public static function elapsedTime($timestamp)
     {
-        // @todo: deprecated
-
         $second = 1;
         $minute = $second * 60;
         $hour   = $minute * 60;
@@ -163,14 +173,14 @@ class Tools
         $week   = $day * 7;
         $year   = $week * 52;
 
-        $timeSegments = array(
+        $timeSegments = [
             'year'   => 0,
             'week'   => 0,
             'day'    => 0,
             'hour'   => 0,
             'minute' => 0,
             'second' => 0,
-        );
+        ];
 
         $elapsedTime = time() - intval($timestamp);
 
@@ -188,4 +198,77 @@ class Tools
         return $timeSegments;
     }
 
-} // end of class
+    /**
+     * Return real users IP address even if behind proxy
+     *
+     * @param bool $allowPrivateRange
+     * @param array $prependHeaders if list of additional headers is set, prepend them to list and test first
+     * (used for example on CloudFlare)
+     *
+     * @return mixed - string containing IP address or (bool) false if not found
+     */
+    public function getRealIP($allowPrivateRange = false, array $prependHeaders = null)
+    {
+        static $realIp = null;
+
+        if(null !== $realIp) {
+            return $realIp;
+        }
+
+        $headers = [
+            'HTTP_CF_CONNECTING_IP', //
+            'REMOTE_ADDR',
+            'CLIENT_IP',
+            'FORWARDED',
+            'FORWARDED_FOR',
+            'FORWARDED_FOR_IP',
+            'HTTP_CLIENT_IP',
+            'HTTP_FORWARDED',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED_FOR_IP',
+            'HTTP_PC_REMOTE_ADDR',
+            'HTTP_PROXY_CONNECTION',
+            'HTTP_VIA',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED_FOR_IP',
+            'HTTP_X_IMFORWARDS',
+            'HTTP_X_PROXY_CONNECTION',
+            'VIA',
+            'X_FORWARDED',
+            'X_FORWARDED_FOR',
+        ];
+
+        if($prependHeaders !== null && !empty($prependHeaders)) {
+            $headers = array_merge($prependHeaders, $headers);
+        }
+
+        foreach($headers as $row) {
+            if(!array_key_exists($row, $_SERVER)) {
+                continue;
+            }
+
+            foreach(explode(',', $_SERVER[$row]) as $ip) {
+                $tmpIp = trim ($tmpIp);
+                $portPos = stripos ($tmpIp, ':');
+
+                if(false !== $portPos) {
+                    $tmpIp = substr ($tmpIp, 0, $portPos);
+                }
+
+                $flag = $allowPrivateRange
+                    ? FILTER_FLAG_NO_RES_RANGE
+                    : FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE;
+
+                if(false === filter_var($ip, FILTER_VALIDATE_IP, $flag)) {
+                    continue;
+                }
+
+                return $realIp = $tmpIp;
+            }
+        }
+
+        return $realIp = false;
+    }
+
+}
