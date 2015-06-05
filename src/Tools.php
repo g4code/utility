@@ -173,7 +173,7 @@ class Tools
         unset ($dateDiff['month']);
 
         $dateDiff['week'] = floor($dateDiff['days_total'] / 7);
-        $dateDiff['day']  = floor($dateDiff['days_total'] % 7);
+        $dateDiff['day']  = $dateDiff['days_total'] % 7;
 
         return $dateDiff;
     }
@@ -250,7 +250,7 @@ class Tools
 
         return $realIp = false;
     }
-    
+
     /**
      * Calculates time difference between current time and specified timestamp
      * and returns array with human readable properties of time interval
@@ -262,9 +262,9 @@ class Tools
     {
         $dateRef = new \DateTime('@' . $timestamp);
         $dateNow = new \DateTime();
-    
+
         $dateDiff = $dateNow->diff($dateRef);
-    
+
         return [
         'past_time'  => $dateDiff->invert,
         'year'       => $dateDiff->y,
