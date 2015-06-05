@@ -166,36 +166,16 @@ class Tools
      */
     public static function elapsedTime($timestamp)
     {
-        $second = 1;
-        $minute = $second * 60;
-        $hour   = $minute * 60;
-        $day    = $hour * 24;
-        $week   = $day * 7;
-        $year   = $week * 52;
+        // @todo: deprecated - use timeDiff instead of this
 
-        $timeSegments = [
-            'year'   => 0,
-            'week'   => 0,
-            'day'    => 0,
-            'hour'   => 0,
-            'minute' => 0,
-            'second' => 0,
-        ];
+        $dateDiff = self::timeDiff($timestamp);
 
-        $elapsedTime = time() - intval($timestamp);
+        unset ($dateDiff['month']);
 
-        if ($elapsedTime <= 0) {
-            return $timeSegments;
-        }
+        $dateDiff['week'] = floor($dateDiff['days_total'] / 7);
+        $dateDiff['day']  = floor($dateDiff['days_total'] % 7);
 
-        foreach($timeSegments as $key => $value) {
-            if ($elapsedTime >= $$key) {
-                $timeSegments[$key] = floor($elapsedTime/$$key);
-                $elapsedTime -= $timeSegments[$key] * $$key;
-            }
-        }
-
-        return $timeSegments;
+        return $dateDiff;
     }
 
     /**
@@ -269,6 +249,32 @@ class Tools
         }
 
         return $realIp = false;
+    }
+    
+    /**
+     * Calculates time difference between current time and specified timestamp
+     * and returns array with human readable properties of time interval
+     *
+     * @param integer $timestamp
+     * @return array
+     */
+    public static function timeDiff($timestamp)
+    {
+        $dateRef = new \DateTime('@' . $timestamp);
+        $dateNow = new \DateTime();
+    
+        $dateDiff = $dateNow->diff($dateRef);
+    
+        return [
+        'past_time'  => $dateDiff->invert,
+        'year'       => $dateDiff->y,
+        'month'      => $dateDiff->m,
+        'day'        => $dateDiff->d,
+        'hour'       => $dateDiff->h,
+        'minute'     => $dateDiff->i,
+        'second'     => $dateDiff->s,
+        'days_total' => $dateDiff->days,
+        ];
     }
 
 }
