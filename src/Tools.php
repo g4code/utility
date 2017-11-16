@@ -189,15 +189,8 @@ class Tools
      */
     public function getRealIP($allowPrivateRange = false, array $prependHeaders = null)
     {
-        static $realIp = null;
-
-        if(null !== $realIp) {
-            return $realIp;
-        }
-
         $headers = [
-            'HTTP_CF_CONNECTING_IP', //
-            'REMOTE_ADDR',
+            'HTTP_CF_CONNECTING_IP', // CloudFlare sent IP
             'CLIENT_IP',
             'FORWARDED',
             'FORWARDED_FOR',
@@ -217,6 +210,7 @@ class Tools
             'VIA',
             'X_FORWARDED',
             'X_FORWARDED_FOR',
+            'REMOTE_ADDR',      // REMOTE_ADDR is always set, use it as last resort
         ];
 
         if($prependHeaders !== null && !empty($prependHeaders)) {
@@ -228,8 +222,8 @@ class Tools
                 continue;
             }
 
-            foreach(explode(',', $_SERVER[$row]) as $ip) {
-                $tmpIp = trim ($tmpIp);
+            foreach(array_reverse(explode(',', $_SERVER[$row])) as $ip) {
+                $tmpIp = trim ($ip);
                 $portPos = stripos ($tmpIp, ':');
 
                 if(false !== $portPos) {
@@ -240,7 +234,7 @@ class Tools
                     ? FILTER_FLAG_NO_RES_RANGE
                     : FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE;
 
-                if(false === filter_var($ip, FILTER_VALIDATE_IP, $flag)) {
+                if(false === filter_var($tmpIp, FILTER_VALIDATE_IP, $flag)) {
                     continue;
                 }
 

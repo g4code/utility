@@ -1,6 +1,7 @@
 # Add your rules here #
 #######################
 composer.lock
+.idea/
 
 # Default GIT ignore rules #
 ############################
