@@ -222,11 +222,11 @@ class Tools
                 continue;
             }
 
-            foreach(array_reverse(explode(',', $_SERVER[$row])) as $ip) {
+            foreach(explode(',', $_SERVER[$row]) as $ip) {
                 $tmpIp = trim ($ip);
                 $portPos = stripos ($tmpIp, ':');
 
-                if(false !== $portPos) {
+                if(!filter_var($tmpIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && false !== $portPos) {
                     $tmpIp = substr ($tmpIp, 0, $portPos);
                 }
 

@@ -111,7 +111,19 @@ class ToolsTest extends PHPUnit_Framework_TestCase
             'REMOTE_ADDR' => '199.99.99.99'
         ];
 
-        $this->assertEquals('160.99.1.1', $this->tools->getRealIP());
+        $this->assertEquals('180.99.99.12', $this->tools->getRealIP());
+    }
+
+    public function testHttpXForwardedForWithPort()
+    {
+        $ip = '180.99.99.12:7777,123.123.123.123,160.99.1.1';
+
+        $_SERVER = [
+            'HTTP_X_FORWARDED_FOR' => $ip,
+            'REMOTE_ADDR' => '199.99.99.99'
+        ];
+
+        $this->assertEquals('180.99.99.12', $this->tools->getRealIP());
     }
 
     public function testPort()
@@ -136,7 +148,28 @@ class ToolsTest extends PHPUnit_Framework_TestCase
         ];
 
         $this->assertEquals($ip, $this->tools->getRealIP());
+    }
 
+    public function testIpv6Private()
+    {
+        $ip = 'fd30::1:ff4e:3e:9:e';    // private range ipv6
+
+        $_SERVER = [
+            'CLIENT_IP' => $ip,
+        ];
+
+        $this->assertFalse($this->tools->getRealIP());
+    }
+
+    public function testIpv6NoPrivatePrivate()
+    {
+        $ip = 'fd30::1:ff4e:3e:9:e';    // private range ipv6
+
+        $_SERVER = [
+            'CLIENT_IP' => $ip,
+        ];
+
+        $this->assertEquals($ip, $this->tools->getRealIP(true));
     }
 
 }
